@@ -1,0 +1,183 @@
+# vim: set filetype=sh :
+
+__aws_ps1 ()
+{
+	[ -n "$AWS_PROFILE" ] && printf "{%s}" $AWS_PROFILE;
+}
+
+__kubectl_ps1 ()
+{
+	local CL_CTX=$(kubectl config view --minify --output 'jsonpath={$.contexts[*].name}:{..namespace}' 2>/dev/null);
+	[ -n "$CL_CTX" ] && printf "[%s]" $CL_CTX;
+}
+
+__prompt_command ()
+{
+	local aws k8s git
+
+	history -a;
+	history -n;
+
+	PS1=''
+
+#	echo "PS1_MIN: '$PS1_MIN', PS1_MIN_OPTS: '$PS1_MIN_OPTS'"
+
+	# if PS_1_MIN is set, but PS_1_MIN_OPTS is not
+	[ -n "$PS1_MIN" -a -z "$PS1_MIN_OPTS" ] && { PS1='\$ '; return 0; }
+#	echo "ps1-min-opts are set";
+
+
+	PS1+='\A'
+
+	PROMPT_DIRTRIM=1
+	PS1+=' \w'
+
+	case $PS1_MIN_OPTS in
+		*a*)
+		echo "PS1_MIN_OPTS contains a ('$PS1_MIN_OPTS')"
+		;;&
+		*k*)
+		echo "PS1_MIN_OPTS contains k ('$PS1_MIN_OPTS')"
+		;;&
+		*g*)
+		echo "PS1_MIN_OPTS contains g ('$PS1_MIN_OPTS')"
+		;;&
+#		*)
+#		echo "end..."; return 0;
+#		;;
+	esac
+
+	aws="$(__aws_ps1)"
+	k8s="$(__kubectl_ps1)"
+	git="$(__git_ps1 \(%s\))"
+
+	PS1+=" $aws$k8s$git"
+	PS1+='\$ '
+}
+
+toggle_ps1_min ()
+{
+	[ "$PS1_MIN" ] && unset PS1_MIN PS1_MIN_OPTS || export PS1_MIN=1 PS1_MIN_OPTS="$@"
+}
+alias t='toggle_ps1_min'
+#alias tt='toggle_ps1_min GIT'
+#alias ttt='toggle_ps1_min GIT K8s'
+
+#prompt_command  ()
+# {
+#  local ERR="$?"
+#  local ERRPROMPT=
+#  local DOCKERCONNECT=
+#  local SETPROXY=
+#  local BRANCH=
+#
+#  [ "${ERR}" -ne 0 ] && { ERRPROMPT="(${ERR})"; }
+#  [ -n "${DOCKER_HOST}" ] && { DOCKERCONNECT=$'\xf0\x9f\x90\xb3 '; } || { unset DOCKERCONNECT; }
+#
+#  history -a; history -r;   # https://superuser.com/a/1158857/341187
+#  PROMPT_DIRTRIM=0          # see also prompt PS1="\W"
+#
+#  if git branch &>/dev/null; then
+#    BRANCH="[$(git branch 2>/dev/null | grep \* |  cut -d " " -f 2)]";
+#  fi
+#
+#  local GREEN="\[\033[0;32m\]"
+#  local BLUE="\[\033[0;34m\]"
+#  local CYAN="\[\033[0;36m\]"
+#  local RED="\[\033[0;31m\]"
+#  local DEFAULT="\[\033[00m\]"
+#  local GREY="\[\033[0;90m\]"
+#
+#  #export PS1="${GREEN}\u${DEFAULT}@${CYAN}${HOST}${DEFAULT}:${BLUE}\w${DEFAULT}${BRANCH}${GREY}${SETPROXY}${RED}${ERRPROMPT}${DEFAULT}\$ "
+#  # "\[" https://askubuntu.com/a/24422
+#}
+
+man ()
+{
+	env \
+		LESS_TERMCAP_mb=$'\e[1;31m' \
+		LESS_TERMCAP_md=$'\e[1;36m' \
+		LESS_TERMCAP_me=$'\e[0m' \
+		LESS_TERMCAP_se=$'\e[0m' \
+		LESS_TERMCAP_so=$'\e[1;40;92m' \
+		LESS_TERMCAP_ue=$'\e[0m' \
+		LESS_TERMCAP_us=$'\e[1;32m' \
+		man "$@"
+}
+
+validate_yml ()
+{
+	command -v ruby &>/dev/null || { echo "ruby not installed. Aborting." >&2; return 1; }
+	[ -z $1 ] && { echo "no file given."; return 1; }
+	[ -f $1 ] || { echo "no valid file."; return 1; }
+	echo "$FUNCNAME not finished.."; return 1;
+	# https://stackoverflow.com/questions/3971822/how-do-i-validate-my-yaml-file-from-command-line
+	#echo $( ruby -e "require 'yaml'; YAML.load_file('$1')"
+	# sudo pip install PyYAML
+	#python -c 'import yaml,sys;yaml.safe_load(sys.stdin)' < docker-compose.yml
+	# https://github.com/adrienverge/yamllint
+}
+
+imagemagick_scale ()
+{
+	local FILE=${1?'no filename.'}
+	local SCALE=${2?'no scale.'}
+	echo docker run --rm -v $(pwd):/img -ti jess/imagemagick convert /img/${FILE} -resize ${SCALE}% /img/${SCALE}_${FILE}
+}
+
+brew_cleanup ()
+{
+	brew update
+	brew upgrade
+	brew cleanup -s
+	#now diagnotic
+	brew doctor
+	brew missing
+}
+
+url_decode ()
+{
+	: "${*//+/ }";
+	echo -e "${_//%/\\x}";
+}
+
+my_ip ()
+{
+	# ip -4 addr | grep inet | awk '{split($2, myip, "/"); print myip[1]}'
+	# curl -s http://whatismyip.akamai.com/
+	# echo
+	select HOST in checkip.amazonaws.com whatismyip.akamai.com ifconfig.me icanhazip.com ipecho.net/plain ipinfo.io/ip; do
+		local ip=$(curl -s "$HOST"); echo $ip; break;      # get public ip
+	done
+}
+
+jwt_decode ()
+{
+	#sed 's/\./\n/g' <<< $(cut -d. -f1,2 <<< $1) | base64 --decode | jq
+	jq -R 'split(".") | .[1] | @base64d | fromjson' <<< "$1"
+}
+
+rainymood ()
+{
+	local FILE="${1:-$((RANDOM%4))}"
+	local URL="https://rainymood.com/audio1110/${FILE}.ogg"
+	mpv "$URL" && rainymood
+}
+
+soundcloud ()
+{
+	:${1?'no url given.'}
+	mpv "$1"
+}
+
+mkchdir ()
+{
+	\mkdir -p $1 && cd $_
+}
+
+swap()
+{
+  # https://stackoverflow.com/a/1115909/14523221
+  local TMPFILE=tmp.$$;     
+	mv "$1" $TMPFILE && mv "$2" "$1" && mv $TMPFILE "$2";
+}
