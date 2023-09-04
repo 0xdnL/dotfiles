@@ -1,2 +1,49 @@
-alias ..='cd ..'
-alias ...='cd ../..'
+alias ..="cd .."
+alias ...="cd ../.."
+
+#alias ls='gls --indicator-style=slash --color=auto' # use gnu-ls from core-utils
+alias l="ls -lh"
+alias ll="ls -lah"
+alias ls='exa -F --color=never' # use replacement written in rust
+alias ls='exa -F' # use replacement written in rust
+alias l="ls -l"
+alias ll="ls -la"
+
+alias bat='bat --style plain'
+
+alias cp="cp -iv"
+alias mv="mv -iv"
+#alias rm="rm -iv"  # alias rm="echo 'use rmtrash !'" # https://apple.stackexchange.com/a/17637
+alias mkdir='mkdir -pv'
+
+alias bc='bc -l'
+#alias diff='colordiff'
+
+#alias sha1='openssl sha1'
+alias md5='openssl dgst -md5 '				# generate digest md5
+alias sha1='openssl dgst -sha1 '			# generate digest sha-1
+alias sha256='openssl dgst -sha256 '	# generate digest sha-256
+
+alias mount='mount |column -t'
+alias path='echo -e ${PATH//:/\\n}'
+alias now='date +"%T"'
+
+alias ping='ping -c 5' 					# stop after sending count ECHO_REQUEST packets
+alias fping='ping -c 100 -s.2'  # fast ping - do not wait interval 1 second, go fast 
+#alias pots='netstat -tulpn'
+
+alias grep='grep --color=auto --binary-files=without-match --exclude-dir .git'
+alias glog='git log --oneline --decorate --color --graph'
+alias glg='git log --graph --pretty=format:"%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ch) %C(bold blue)<%an>%Creset" --abbrev-commit'
+#alias cal='cal | grep --color -EC6 "\b$(date +%e | sed "s/ //g")"'
+alias tmux='tmux -u'
+alias vbox='vboxmanage'
+
+alias shebang='echo "#!/usr/bin/env bash"'
+alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME' # https://developer.atlassian.com/blog/2016/02/best-way-to-store-dotfiles-git-bare-repo/
+
+# macos
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  alias dhide="defaults write com.apple.finder CreateDesktop false; killall Finder;"
+  alias dshow="defaults write com.apple.finder CreateDesktop true; killall Finder;"
+fi
