@@ -5,23 +5,29 @@
 ## prerequesites
 
 - git
-- homebrew
-- ..
+- chezmoi
 
 ## usage
 
 ```sh
-cd $HOME
+chezmoi init
 
-git init
+chezmoi add FILE
 
-git remote add origin git@github.com:dnltinney/dotfiles.git
+chezmoi cd
 
-git fetch
+git add .
+git commit -v
+git push
 
-git checkout $(hostname -s)
+exit
+
+chezmoi diff
+
+# add other steps later..
 ```
 
 ## see also
 
+- [chezmoi.io](https://www.chezmoi.io/)
 - [dotfiles.github.io](https://dotfiles.github.io/)
