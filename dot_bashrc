@@ -1,20 +1,102 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 [[ -r "/opt/homebrew/etc/profile.d/bash_completion.sh" ]] && . "/opt/homebrew/etc/profile.d/bash_completion.sh"
 
-shopt -s histappend					# close a session history will appended rather than overwritten
-shopt -s cmdhist					# force commands entered on more than one line to be adjusted to fit on only one for parsing
+#if [ -z "${TMUX}" ];
+#  echo "not sourcing .bashrc"
+#  return;     # don't source again when starting tmux session
+#fi
+
+[ -f ~/.fzf.bash ]   && source ~/.fzf.bash
+[ -f ~/.bash_alias ] && source ~/.bash_alias
+[ -f ~/.bash_func ]  && source ~/.bash_func
+
+shopt -s histappend              # close a session history will appended rather than overwritten
+shopt -s cmdhist                 # force commands entered on more than one line to be adjusted to fit on only one for parsing
 export HISTSIZE=
 export HISTFILESIZE=
 export HISTIGNORE='ls:ll:ls -alh:pwd:clear:history'
 export HISTCONTROL='ignoredups'
 
+# git prompt see: $(brew --prefix)/etc/bash_completion.d/git
+export GIT_PS1_SHOWDIRTYSTATE=true      # staged '+', unstaged '*'
+export GIT_PS1_SHOWUNTRACKEDFILES=true  # '%' untracked files
+export GIT_PS1_SHOWUPSTREAM="auto"      # '<' behind, '>' ahead, '<>' diverged, '=' no difference
+export GIT_PS1_SHOWSTASHSTATE=true      # '$' something is stashed
+export GIT_PS1_SHOWCOLORHINTS=true
+#export GIT_CONFIG="$HOME/.gitconfig"   # does nothing but cause problems when set, kube plugin, git confgi list ...
 
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
-[ -f ~/.bash_alias ] && source ~/.bash_alias
+export PS1='$(__aws_ps1)\A \w$(__git_ps1 \(%s\)) \$ '
+export PS2='> ' # used in multiline commands
+export PS4='+ ${BASH_SOURCE##*/}.${LINENO} ${FUNCNAME}: '
+export PROMPT_DIRTRIM=2
+# export PROMPT_COMMAND='__prompt_command'
 
-# Secretive Config
-export SSH_AUTH_SOCK=/Users/daniel/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh
+fail() {
+  return -1;
+}
+
+success() {
+	return 0;
+}
+
+flip_table() {
+	local CODE=$?
+	local ESC="\001$(tput sgr0)\002"
+	local RED="\001$(tput setaf 1)\002"
+
+  if [ $CODE -ne 0 ]; then
+	  printf "%b\n" "${RED}$(__get_flip)${ESC}";
+		return 0;
+	fi
+}
+
+__get_flip() {
+	local A_FLIPS=(
+			'(╯°□°）╯︵ ┻━┻'
+			'(ﾉ °益°)ﾉ 彡 ┻━┻'
+			'(╯°□°）╯︵ ┻━┻'
+			'(ﾉ °益°)ﾉ 彡 ┻━┻'
+			'(╯°□°)╯︵ ┻━┻'
+			'(╯ಠ_ರೃ)╯︵ ┻━┻'
+			'(┛◉Д◉)┛彡┻━┻'
+			'(┛ò__ó)┛彡┻━┻'
+			'(┛❍ᴥ❍)┛彡┻━┻'
+			'(ʘ∇ʘ)ク 彡 ┻━┻'
+			'(╯°⍜°）╯︵ ┻━┻'
+			'(┛ò__ó)┛︵ ┻━┻'
+			'(ノÒ益Ó)ノ彡▔▔▏'
+		)
+	local RAND="$(( $RANDOM % ${#A_FLIPS[@]} ))"
+
+	printf "%s" "${A_FLIPS[$RAND]}"
+	#for i in "${!A_FLIPS[@]}"; do
+  #	#printf "%s\t%s\n" "$i" "${A_FLIPS[$i]}"
+  #	echo "$i: ${A_FLIPS[$i]}"
+	#done
+}
+
+export PROMPT_COMMAND="flip_table; history -a; history -n;"
+
 
 complete -C '/usr/local/bin/aws_completer' aws
+complete -C '/opt/homebrew/bin/terraform' terraform
+complete -C '/opt/homebrew/bin/terraform' terragrunt # https://github.com/gruntwork-io/terragrunt/issues/689
+
+source "$HOME/.cargo/env"
+export GPG_TTY="$(tty)" # used by gpg-agent
+export GOPATH="$HOME/go"
+export SSH_AUTH_SOCK="$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"  # Secretive Config
+
+export PATH="$GOPATH/bin:$PATH"
+export PATH="$HOME/.krew/bin:$PATH"
 export PATH="/opt/homebrew/opt/curl/bin:$PATH"
-. "$HOME/.cargo/env"
+export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
+export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
+export PATH="$HOME/.rd/bin:$PATH"
+export PATH="$HOME/.pgenv/bin:$HOME/.pgenv/pgsql/bin:$PATH"
+
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
