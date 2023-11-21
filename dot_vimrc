@@ -9,6 +9,7 @@ set encoding=utf-8
 "set shiftwidth=2
 "set softtabstop=2
 set tabstop=2
+set backspace=indent,eol,start " https://stackoverflow.com/a/11560415/14523221
 
 " pathogen
 "execute pathogen#infect()
@@ -58,7 +59,7 @@ function! InsertCode()
 endfunction
 
 iabbrev <expr> copy# InsertCopyright()
-iabbrev <expr> code <Tab> InsertCode()
+"iabbrev <expr> code <Tab> InsertCode()
 
 "To use fzf in Vim, add the following line to your .vimrc:
 set rtp+=/usr/local/opt/fzf
